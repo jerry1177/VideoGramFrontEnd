@@ -93,6 +93,11 @@ public class SignupFragment extends Fragment {
         mListener = null;
     }
 
+    public void LoginPress(View view) {
+        //Call login page here
+    }
+
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated

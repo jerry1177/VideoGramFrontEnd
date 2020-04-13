@@ -5,10 +5,49 @@
     android:layout_height="match_parent"
     tools:context=".LoginFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
-
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="50dp"
+        android:paddingRight="50dp"
+        android:orientation="vertical" >
+        <ImageView
+            android:id="@+id/VideogramLogo"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="50dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:background="@color/colorPrimaryDark"/>
+        <EditText
+            android:id="@+id/Username"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:layout_below="@id/VideogramLogo"
+            android:hint="Username" />
+        <EditText
+            android:id="@+id/Password"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/Username"
+            android:hint="Password" />
+        <Button
+            android:id="@+id/LoginButton"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginBottom="25dp"
+            android:text="Login" />
+        <Button
+            android:id="@+id/SignUpButton"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="25dp"
+            android:text="Sign Up"
+            android:onClick="SignUpPress"/>
+    </RelativeLayout>
 </FrameLayout>
