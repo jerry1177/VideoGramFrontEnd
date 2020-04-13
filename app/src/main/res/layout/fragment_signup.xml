@@ -60,8 +60,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
             android:layout_marginBottom="25dp"
-            android:text="Login"
-            android:onClick="LoginPress"/>
+            android:text="Login"/>
         <Button
             android:id="@+id/SignUpButton"
             android:layout_width="150dp"

@@ -5,12 +5,17 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 
 
 /**
@@ -55,6 +60,13 @@ public class LoginFragment extends Fragment {
         return fragment;
     }
 
+
+    EditText username;
+    EditText password;
+    Button signUpButton;
+    Button loginButton;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +81,43 @@ public class LoginFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_login, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        username = (EditText) view.findViewById(R.id.Username);
+        password = (EditText) view.findViewById(R.id.Password);
+        loginButton = (Button) view.findViewById(R.id.LoginButton);
+        signUpButton = (Button) view.findViewById(R.id.SignUpButton);
+
+        loginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+            }
+        });
+
+        signUpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToSignupFragment());
+            }
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        MainActivity main = ((MainActivity) getActivity());
+        main.hideUpButton();
+        main.hideNavigationBar();
+        ViewManagerSingleton viewManager = ViewManagerSingleton.GetSingleton();
+        viewManager.setCurrentView(CurrentView.LOGIN);
+        if (viewManager.getToView() == ToView.HOME)
+            Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event

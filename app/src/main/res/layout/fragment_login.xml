@@ -47,7 +47,6 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:layout_marginBottom="25dp"
-            android:text="Sign Up"
-            android:onClick="SignUpPress"/>
+            android:text="Sign Up"/>
     </RelativeLayout>
 </FrameLayout>

@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,6 +61,22 @@ public class HomeFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        ((MainActivity)getActivity()).showNavigationBar();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        ViewManagerSingleton viewManager = ViewManagerSingleton.GetSingleton();
+        viewManager.setCurrentView(CurrentView.HOME);
+        // if the user wants to go to search page then redirect
+        if (viewManager.getToView() == ToView.SEARCH)
+            Navigation.findNavController(getView()).navigate(HomeFragmentDirections.actionHomeFragmentToSearchFragment());
+        // if the user wants to go to upload video page then redirect
+        if (viewManager.getToView() == ToView.UPLOAD)
+            Navigation.findNavController(getView()).navigate(HomeFragmentDirections.actionHomeFragmentToUploadVideoFragment());
+
+        viewManager.setToView(ToView.LOGIN);
     }
 
     @Override

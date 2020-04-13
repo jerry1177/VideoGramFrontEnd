@@ -4,11 +4,16 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 
 
 /**
@@ -53,6 +58,13 @@ public class SignupFragment extends Fragment {
         return fragment;
     }
 
+    EditText username;
+    EditText password;
+    EditText fName;
+    EditText lNname;
+    EditText email;
+    Button signUp;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +72,15 @@ public class SignupFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        MainActivity main = (MainActivity) getActivity();
+        main.showUpButton();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
     }
 
     @Override
@@ -67,6 +88,26 @@ public class SignupFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_signup, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        username = (EditText) view.findViewById(R.id.Username);
+        password = (EditText) view.findViewById(R.id.Password);
+        fName = (EditText) view.findViewById(R.id.Firstname);
+        lNname = (EditText) view.findViewById(R.id.Lastname);
+        email = (EditText) view.findViewById(R.id.Email);
+        signUp = (Button) view.findViewById(R.id.SignUpButton);
+        signUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((MainActivity)getActivity()).onBackPressed();
+                ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
+            }
+        });
+        ViewManagerSingleton.GetSingleton().setCurrentView(CurrentView.SIGNUP);
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event

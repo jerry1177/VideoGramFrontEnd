@@ -63,6 +63,12 @@ public class UploadVideoFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        ViewManagerSingleton.GetSingleton().setCurrentView(CurrentView.UPLOAD);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment

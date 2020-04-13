@@ -77,6 +77,12 @@ public class SearchFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        ViewManagerSingleton.GetSingleton().setCurrentView(CurrentView.SEARCH);
+    }
+
+    @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
