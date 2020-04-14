@@ -9,9 +9,11 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -103,11 +105,48 @@ public class SignupFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 ((MainActivity)getActivity()).onBackPressed();
-                ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
+                if (ValidSignUpCredentials(username, password, fName, lNname, email))
+                {
+                    ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
+                }
             }
         });
         ViewManagerSingleton.GetSingleton().setCurrentView(CurrentView.SIGNUP);
 
+        password.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                // If the event is a key-down event on the "enter" button
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    // Perform action on key press
+                    if (ValidSignUpCredentials(username, password, fName, lNname, email))
+                    {
+                        ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+    }
+
+
+    public boolean ValidSignUpCredentials(EditText username, EditText password, EditText Firstname, EditText Lastname, EditText Email) {
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(email.getWindowToken(), 0);
+        if ((!username.getText().toString().equals(""))
+                && (!password.getText().toString().equals(""))
+                && (!Firstname.getText().toString().equals(""))
+                && (!Lastname.getText().toString().equals(""))
+                && (!Email.getText().toString().equals("")))
+        {
+            //Validate Credentials further here
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -134,9 +173,7 @@ public class SignupFragment extends Fragment {
         mListener = null;
     }
 
-    public void LoginPress(View view) {
-        //Call login page here
-    }
+
 
 
     /**

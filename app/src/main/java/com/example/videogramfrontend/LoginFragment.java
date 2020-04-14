@@ -1,19 +1,23 @@
 package com.example.videogramfrontend;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -25,6 +29,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import static androidx.core.content.ContextCompat.getSystemService;
 
 
 /**
@@ -49,7 +55,9 @@ public class LoginFragment extends Fragment {
 
     public LoginFragment() {
         // Required empty public constructor
-        url = "http://" + BuildConfig.Backend + "/user/login";
+        url = "http://" + BuildConfig.Backend + ":3000/user/login";
+
+
     }
 
     /**
@@ -77,7 +85,7 @@ public class LoginFragment extends Fragment {
     Button loginButton;
 
     // Make post url
-    private final String url;
+    private String url;
 
 
     @Override
@@ -87,6 +95,7 @@ public class LoginFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        //url = "http://192.168.1.14:3000/";
     }
 
     @Override
@@ -109,18 +118,54 @@ public class LoginFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                // Make post JSON
-                JSONObject params = new JSONObject();
-                try {
-                    params.put("username", username.getText());
-                    params.put("password", password.getText());
 
-                } catch (JSONException e) {
-                    Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+
+
+
+                if (ValidLoginCredentials(username, password))
+                {
+                    // Make post JSON
+                    JSONObject params = new JSONObject();
+                    try {
+
+                        // string "username" is the key in the json
+                        // and username.getText() is the value part of the json
+                        params.put("username", username.getText().toString());
+                        params.put("password", password.getText().toString());
+
+                    } catch (JSONException e) {
+                        Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                    }
+
+                    sendRequest(url, params);
                 }
+            }
+        });
 
-                sendRequest(url, params);
+        password.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                // If the event is a key-down event on the "enter" button
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    // Perform action on key press
+                    if (ValidLoginCredentials(username, password))
+                    {
+                        // Make post JSON
+                        JSONObject params = new JSONObject();
+                        try {
 
+                            params.put("username", username.getText());
+                            params.put("password", password.getText());
+
+                        } catch (JSONException e) {
+                            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                        }
+
+                        sendRequest(url, params);
+                    }
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -131,6 +176,7 @@ public class LoginFragment extends Fragment {
             }
         });
     }
+
 
 
     private void sendRequest(String url, JSONObject params) {
@@ -167,9 +213,24 @@ public class LoginFragment extends Fragment {
 
                     }
                 });
-        // Send request
+
+        // Send request by adding it to the request que
         SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
     }
+
+    private boolean ValidLoginCredentials(EditText username, EditText password) {
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(password.getWindowToken(), 0);
+        if ((!username.getText().toString().equals("")) && (!password.getText().toString().equals("")))
+        {
+            //Validate Credentials further here
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
 
     @Override
     public void onResume() {
@@ -209,9 +270,6 @@ public class LoginFragment extends Fragment {
     }
 
 
-    public void SignUpPress(View view) {
-        //Call sign up page here
-    }
 
     /**
      * This interface must be implemented by activities that contain this
