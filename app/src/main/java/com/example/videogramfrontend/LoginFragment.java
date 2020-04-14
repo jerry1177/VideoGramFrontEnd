@@ -1,21 +1,27 @@
 package com.example.videogramfrontend;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+
+import static androidx.core.content.ContextCompat.getSystemService;
 
 
 /**
@@ -95,7 +101,27 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+                if (ValidLoginCredentials(username, password))
+                {
+                    Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+                }
+            }
+        });
+
+        password.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                // If the event is a key-down event on the "enter" button
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    // Perform action on key press
+                    if (ValidLoginCredentials(username, password))
+                    {
+
+                        Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+                    }
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -106,6 +132,20 @@ public class LoginFragment extends Fragment {
             }
         });
     }
+
+    public boolean ValidLoginCredentials(EditText username, EditText password) {
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(password.getWindowToken(), 0);
+        if ((!username.getText().toString().equals("")) && (!password.getText().toString().equals("")))
+        {
+            //Validate Credentials further here
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
 
     @Override
     public void onResume() {
@@ -145,9 +185,6 @@ public class LoginFragment extends Fragment {
     }
 
 
-    public void SignUpPress(View view) {
-        //Call sign up page here
-    }
 
     /**
      * This interface must be implemented by activities that contain this
