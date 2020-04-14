@@ -16,6 +16,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
@@ -40,6 +49,7 @@ public class LoginFragment extends Fragment {
 
     public LoginFragment() {
         // Required empty public constructor
+        url = "http://" + BuildConfig.Backend + "/user/login";
     }
 
     /**
@@ -65,6 +75,9 @@ public class LoginFragment extends Fragment {
     EditText password;
     Button signUpButton;
     Button loginButton;
+
+    // Make post url
+    private final String url;
 
 
     @Override
@@ -95,7 +108,19 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+
+                // Make post JSON
+                JSONObject params = new JSONObject();
+                try {
+                    params.put("username", username.getText());
+                    params.put("password", password.getText());
+
+                } catch (JSONException e) {
+                    Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                }
+
+                sendRequest(url, params);
+
             }
         });
 
@@ -105,6 +130,45 @@ public class LoginFragment extends Fragment {
                 Navigation.findNavController(v).navigate(LoginFragmentDirections.actionLoginFragmentToSignupFragment());
             }
         });
+    }
+
+
+    private void sendRequest(String url, JSONObject params) {
+
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success")) {
+                                if (getView() != null)
+                                    Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+                            } else {
+                                Toast.makeText(getContext(), "Invalid username or password", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+
+
+                    }
+                });
+        // Send request
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
     }
 
     @Override
