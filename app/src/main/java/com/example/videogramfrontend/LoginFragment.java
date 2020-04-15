@@ -162,11 +162,6 @@ public class LoginFragment extends Fragment {
                             if(response.getString("message").equals("success"))
                             {
                                 if (getView() != null) {
-                                    // Send User ID over to home page
-                                    HomeFragment home = new HomeFragment();
-                                    Bundle args = new Bundle();
-                                    args.putString("User_Id", response.getString("User_Id"));
-                                    home.setArguments(args);
                                     // Move to home page
                                     Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
                                 }
