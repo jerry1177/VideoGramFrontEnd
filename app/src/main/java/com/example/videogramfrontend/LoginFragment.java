@@ -163,14 +163,18 @@ public class LoginFragment extends Fragment {
                             if(response.getString("message").equals("success"))
                             {
                                 // set user id of user
-                                UserSingleton.getInstance().setUserId(response.getInt("User_id"));
+                                UserSingleton.getInstance().setUserId(response.getInt("User_Id"));
                                 
                                 if (getView() != null) {
                                     // Move to home page
                                     Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
                                 }
-                            } else {
-                                Toast.makeText(getContext(), "Invalid username or password", Toast.LENGTH_SHORT).show();
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
                             }
                         } catch (JSONException e) {
                             //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();

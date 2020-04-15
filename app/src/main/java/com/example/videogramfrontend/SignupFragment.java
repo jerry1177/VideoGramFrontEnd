@@ -205,11 +205,19 @@ public class SignupFragment extends Fragment {
                         try {
                             // if valid credentials
                             if(response.getString("message").equals("success")) {
+
+                                UserSingleton.getInstance().setUserId(response.getInt("User_Id"));
+
                                 if (getView() != null)
+
                                     Navigation.findNavController(getView()).navigate(SignupFragmentDirections.actionSignupFragmentToHomeFragment());
                                     //ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
-                            } else {
-                                Toast.makeText(getContext(), "Invalid sign up info", Toast.LENGTH_SHORT).show();
+                            }
+                            else if (response.getString("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
                             }
                         } catch (JSONException e) {
                             //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();

@@ -5,10 +5,33 @@
     android:layout_height="match_parent"
     tools:context=".SearchFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Search page!" />
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:orientation="vertical" >
+        <EditText
+            android:id="@+id/SearchBar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:inputType="text"
+            android:hint="Search" />
+        <TextView
+            android:id="@+id/listItem"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"/>
+        <ListView
+            android:id="@+id/UserListView"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/SearchBar"
+            android:divider="@color/colorPrimaryDark"
+            android:choiceMode="singleChoice"/>
+
+
+    </RelativeLayout>
 
 </FrameLayout>
