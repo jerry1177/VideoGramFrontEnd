@@ -30,6 +30,13 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+
 import static androidx.core.content.ContextCompat.getSystemService;
 
 
@@ -56,8 +63,6 @@ public class LoginFragment extends Fragment {
     public LoginFragment() {
         // Required empty public constructor
         url = "http://" + BuildConfig.Backend + ":3000/user/login";
-
-
     }
 
     /**
@@ -117,52 +122,15 @@ public class LoginFragment extends Fragment {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
-
-
-
-                if (ValidLoginCredentials(username, password))
-                {
-                    // Make post JSON
-                    JSONObject params = new JSONObject();
-                    try {
-
-                        // string "username" is the key in the json
-                        // and username.getText() is the value part of the json
-                        params.put("username", username.getText().toString());
-                        params.put("password", password.getText().toString());
-
-                    } catch (JSONException e) {
-                        Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
-                    }
-
-                    sendRequest(url, params);
-                }
+                ValidateLoginCredentials(username, password);
             }
         });
 
         password.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
-                // If the event is a key-down event on the "enter" button
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    // Perform action on key press
-                    if (ValidLoginCredentials(username, password))
-                    {
-                        // Make post JSON
-                        JSONObject params = new JSONObject();
-                        try {
-
-                            params.put("username", username.getText());
-                            params.put("password", password.getText());
-
-                        } catch (JSONException e) {
-                            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
-                        }
-
-                        sendRequest(url, params);
-                    }
+                    ValidateLoginCredentials(username, password);
                     return true;
                 }
                 return false;
@@ -191,9 +159,17 @@ public class LoginFragment extends Fragment {
 
                         try {
                             // if valid credentials
-                            if(response.getString("message").equals("success")) {
-                                if (getView() != null)
+                            if(response.getString("message").equals("success"))
+                            {
+                                if (getView() != null) {
+                                    // Send User ID over to home page
+                                    HomeFragment home = new HomeFragment();
+                                    Bundle args = new Bundle();
+                                    args.putString("User_Id", response.getString("User_Id"));
+                                    home.setArguments(args);
+                                    // Move to home page
                                     Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
+                                }
                             } else {
                                 Toast.makeText(getContext(), "Invalid username or password", Toast.LENGTH_SHORT).show();
                             }
@@ -218,16 +194,27 @@ public class LoginFragment extends Fragment {
         SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
     }
 
-    private boolean ValidLoginCredentials(EditText username, EditText password) {
+    public void HideKeyboard(EditText textfield) {
+        //Hide Keyboard
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(password.getWindowToken(), 0);
-        if ((!username.getText().toString().equals("")) && (!password.getText().toString().equals("")))
-        {
-            //Validate Credentials further here
-            return true;
-        }
-        else {
-            return false;
+        imm.hideSoftInputFromWindow(textfield.getWindowToken(), 0);
+    }
+
+    private void ValidateLoginCredentials(EditText username, EditText password) {
+        HideKeyboard(password);
+        // If text boxes are empty return false right away
+        if ((!username.getText().toString().equals("")) && (!password.getText().toString().equals(""))) {
+            if ((!username.getText().toString().contains(" ")) && (!password.getText().toString().contains(" "))) {
+                // Make post JSON
+                JSONObject params = new JSONObject();
+                try {
+                    params.put("Username", username.getText().toString());
+                    params.put("Password", password.getText().toString());
+                } catch (JSONException e) {
+                    Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                }
+                sendRequest(url, params);
+            }
         }
     }
 
@@ -285,4 +272,13 @@ public class LoginFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
+
+
+
+
+
+
+
 }

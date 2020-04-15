@@ -18,7 +18,7 @@
             android:layout_marginTop="50dp"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:background="@color/colorPrimaryDark"/>
+            android:src="@mipmap/video_icon"/>
         <EditText
             android:id="@+id/Username"
             android:layout_width="fill_parent"
@@ -37,7 +37,7 @@
             android:layout_below="@id/Username"
             android:textAlignment="center"
             android:maxLines="1"
-            android:inputType="text"
+            android:inputType="textPassword"
             android:imeOptions="actionGo"
             android:hint="Password" />
         <Button

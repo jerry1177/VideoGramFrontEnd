@@ -16,6 +16,15 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
@@ -39,7 +48,7 @@ public class SignupFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
 
     public SignupFragment() {
-        // Required empty public constructor
+        url = "http://" + BuildConfig.Backend + ":3000/user/signup";
     }
 
     /**
@@ -62,10 +71,13 @@ public class SignupFragment extends Fragment {
 
     EditText username;
     EditText password;
+    EditText passwordConfirm;
     EditText fName;
     EditText lNname;
     EditText email;
     Button signUp;
+    // Make post url
+    private String url;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -97,6 +109,7 @@ public class SignupFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         username = (EditText) view.findViewById(R.id.Username);
         password = (EditText) view.findViewById(R.id.Password);
+        passwordConfirm = (EditText) view.findViewById(R.id.PasswordConfirm);
         fName = (EditText) view.findViewById(R.id.Firstname);
         lNname = (EditText) view.findViewById(R.id.Lastname);
         email = (EditText) view.findViewById(R.id.Email);
@@ -104,25 +117,19 @@ public class SignupFragment extends Fragment {
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity)getActivity()).onBackPressed();
-                if (ValidSignUpCredentials(username, password, fName, lNname, email))
-                {
-                    ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
-                }
+                //((MainActivity)getActivity()).onBackPressed();
+                ValidateSignUpCredentials(username, password, passwordConfirm, fName, lNname, email);
             }
         });
         ViewManagerSingleton.GetSingleton().setCurrentView(CurrentView.SIGNUP);
 
-        password.setOnKeyListener(new View.OnKeyListener() {
+        email.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 // If the event is a key-down event on the "enter" button
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
                     // Perform action on key press
-                    if (ValidSignUpCredentials(username, password, fName, lNname, email))
-                    {
-                        ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
-                    }
+                    ValidateSignUpCredentials(username, password, passwordConfirm, fName, lNname, email);
                     return true;
                 }
                 return false;
@@ -131,23 +138,109 @@ public class SignupFragment extends Fragment {
 
     }
 
-
-    public boolean ValidSignUpCredentials(EditText username, EditText password, EditText Firstname, EditText Lastname, EditText Email) {
+    public void HideKeyboard(EditText textfield) {
+        //Hide Keyboard
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(email.getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(textfield.getWindowToken(), 0);
+    }
+
+
+    public void ValidateSignUpCredentials(EditText username, EditText password, EditText passwordConfirm, EditText Firstname, EditText Lastname, EditText Email) {
+        HideKeyboard(email);
         if ((!username.getText().toString().equals(""))
                 && (!password.getText().toString().equals(""))
+                && (!passwordConfirm.getText().toString().equals(""))
                 && (!Firstname.getText().toString().equals(""))
                 && (!Lastname.getText().toString().equals(""))
                 && (!Email.getText().toString().equals("")))
         {
-            //Validate Credentials further here
-            return true;
+            if ((!username.getText().toString().contains(" "))
+                    && (!password.getText().toString().contains(" "))
+                    && (!passwordConfirm.getText().toString().contains(" "))
+                    && (!Firstname.getText().toString().contains(" "))
+                    && (!Lastname.getText().toString().contains(" "))
+                    && (!Email.getText().toString().contains(" ")))
+            {
+                if (password.getText().toString().equals(passwordConfirm.getText().toString()))
+                {
+                    // Make post JSON
+                    JSONObject params = new JSONObject();
+                    try {
+                        params.put("Username", username.getText().toString());
+                        params.put("Password", password.getText().toString());
+                        params.put("Firstname", fName.getText().toString());
+                        params.put("Lastname", lNname.getText().toString());
+                        params.put("Email", email.getText().toString());
+                    } catch (JSONException e) {
+                        Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                    sendRequest(url, params);
+                }
+                else {
+                    Toast.makeText(getContext(), "Passwords do not match", Toast.LENGTH_SHORT).show();
+                }
+            }
+            else{
+                Toast.makeText(getContext(), "Fields may not contain spaces", Toast.LENGTH_SHORT).show();
+            }
         }
-        else {
-            return false;
+        else{
+            Toast.makeText(getContext(), "Fields left blank", Toast.LENGTH_SHORT).show();
         }
     }
+
+
+
+
+
+    private void sendRequest(String url, JSONObject params) {
+
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success")) {
+                                if (getView() != null)
+                                    Navigation.findNavController(getView()).navigate(SignupFragmentDirections.actionSignupFragmentToHomeFragment());
+                                    //ViewManagerSingleton.GetSingleton().setToView(ToView.HOME);
+                            } else {
+                                Toast.makeText(getContext(), "Invalid sign up info", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+
+
+                    }
+                });
+
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+
+
+
+
+
+
+
+
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -190,4 +283,14 @@ public class SignupFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
+
+
+
+
+
+
+
+
 }

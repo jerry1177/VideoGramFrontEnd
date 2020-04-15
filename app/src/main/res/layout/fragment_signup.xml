@@ -18,7 +18,7 @@
             android:layout_marginTop="50dp"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
-            android:background="@color/colorPrimaryDark"/>
+            android:src="@mipmap/video_icon"/>
         <EditText
             android:id="@+id/Username"
             android:layout_width="fill_parent"
@@ -37,14 +37,24 @@
             android:layout_below="@id/Username"
             android:textAlignment="center"
             android:maxLines="1"
-            android:inputType="text"
+            android:inputType="textPassword"
             android:imeOptions="actionNext"
             android:hint="Password" />
+        <EditText
+            android:id="@+id/PasswordConfirm"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/Password"
+            android:textAlignment="center"
+            android:maxLines="1"
+            android:inputType="textPassword"
+            android:imeOptions="actionNext"
+            android:hint="Re-Enter Password" />
         <EditText
             android:id="@+id/Firstname"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/Password"
+            android:layout_below="@id/PasswordConfirm"
             android:textAlignment="center"
             android:maxLines="1"
             android:inputType="text"
