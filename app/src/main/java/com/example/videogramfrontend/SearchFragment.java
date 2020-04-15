@@ -16,8 +16,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.MediaController;
 import android.widget.TextView;
@@ -36,7 +38,9 @@ import org.json.JSONObject;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -59,11 +63,13 @@ public class SearchFragment extends Fragment {
 
     EditText SearchBar;
     ListView UserListView;
-    VideoView VideoPlayer;
+    ListView UserVideosListView;
     TextView UserName;
     private String url;
     ArrayList<String> UserList;
+    ArrayList<Map<String, String>> UserVideos;
     ArrayAdapter<String> UserListAdapter;
+    UserVideosCustomAdapter UserVideosAdapter;
 
 
 
@@ -71,7 +77,7 @@ public class SearchFragment extends Fragment {
 
     public SearchFragment() {
         // Required empty public constructor
-        url = "http://" + BuildConfig.Backend + ":3000/find/users";
+        //url = "http://" + BuildConfig.Backend + ":3000/find/users";
     }
 
     /**
@@ -107,12 +113,20 @@ public class SearchFragment extends Fragment {
 
         SearchBar = (EditText) view.findViewById(R.id.SearchBar);
         UserListView = (ListView) view.findViewById(R.id.UserListView);
-        VideoPlayer = (VideoView) view.findViewById(R.id.VideoPlayer);
-        UserName = (TextView) view.findViewById(R.id.listItem);
+        UserVideosListView = (ListView) view.findViewById(R.id.UserVideosListView);
+        //UserName = (TextView) view.findViewById(R.id.listItem);
         UserList = new ArrayList<String>();
+        UserVideos = new ArrayList<Map<String, String>>();
         UserListAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, UserList);
         UserListView.setAdapter(UserListAdapter);
-        VideoPlayer.setVisibility(View.INVISIBLE);
+
+        UserVideosAdapter = new UserVideosCustomAdapter();
+        UserVideosListView.setAdapter(UserVideosAdapter);
+        UserVideosListView.setVisibility(View.INVISIBLE);
+
+
+
+
         SearchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -120,7 +134,6 @@ public class SearchFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (UserListView.getVisibility() == View.INVISIBLE) {
-                    VideoPlayer.setVisibility(View.INVISIBLE);
                     UserListView.setVisibility(View.VISIBLE);
                 }
                 UserListAdapter.getFilter().filter(s.toString());
@@ -132,13 +145,20 @@ public class SearchFragment extends Fragment {
             public void afterTextChanged(Editable s) {
             }
         });
+        SearchBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UserListView.setVisibility(View.VISIBLE);
+                UserVideosListView.setVisibility(View.INVISIBLE);
+            }
+        });
         UserListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SearchBar.setText(UserListAdapter.getItem(position).toString());
                 UserListView.setVisibility(View.INVISIBLE);
-                VideoPlayer.setVisibility(View.VISIBLE);
-                playVideo();
+                UserVideosListView.setVisibility(View.VISIBLE);
+                GetChosenUserId_AndPopulateVideos(UserListAdapter.getItem(position).toString());
             }
         });
         PopulateUsersList();
@@ -206,16 +226,7 @@ public class SearchFragment extends Fragment {
 
 
 
-    public void playVideo() {
-        MediaController m = new MediaController(getContext());
-        VideoPlayer.setMediaController(m);
 
-        String path = "https://videogramuploadbucket.s3-us-west-2.amazonaws.com/Videogram%2FUser2%2Ftest_video.mp4";
-        Uri uri = Uri.parse(path);
-        VideoPlayer.setVideoURI(uri);
-        VideoPlayer.start();
-
-    }
 
 
 
@@ -230,7 +241,7 @@ public class SearchFragment extends Fragment {
 
     private void PopulateUsersList() {
         JSONObject params = new JSONObject();
-
+        url = "http://" + BuildConfig.Backend + ":3000/find/users";
         // Make JSON object request
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, url, params, new Response.Listener<JSONObject>() {
@@ -274,11 +285,164 @@ public class SearchFragment extends Fragment {
     }
 
 
+    private void GetChosenUserId_AndPopulateVideos(final String Username) {
+        JSONObject params = new JSONObject();
+        url = "http://" + BuildConfig.Backend + ":3000/find/users";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONArray users = response.getJSONArray("result");
+                                //SearchBar.setText(String.valueOf(users.length()));
+                                for (int i = 0; i < users.length(); i++) {
+                                    JSONObject element = users.getJSONObject(i);
+                                    if (element.getString("Username").equals(Username))
+                                    {
+                                        PopulateUserVideosList(element.getInt("User_Id"));
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+    private void PopulateUserVideosList(int User_Id_Chosen) {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("User_Id", User_Id_Chosen);
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        url = "http://" + BuildConfig.Backend + ":3000/get/all/user/video/data/";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONArray users = response.getJSONArray("result");
+                                //SearchBar.setText(String.valueOf(users.length()));
+                                for (int i = 0; i < users.length(); i++) {
+                                    JSONObject element = users.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("Description", element.getString("Description"));
+                                    dict.put("Upload_Date", element.getString("Upload_Date"));
+                                    dict.put("Location", element.getString("Location"));
+                                    UserVideos.add(dict);
+                                }
+                                UserVideosAdapter.notifyDataSetChanged();
+                                //SearchBar.setText(String.valueOf(adapter.getCount()));
+                                UserVideosListView.invalidateViews();
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    class UserVideosCustomAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return UserVideos.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = getLayoutInflater().inflate(R.layout.listview_custom, null);
+            ImageView thumbnail = (ImageView) view.findViewById(R.id.Thumbnail_Image);
+            TextView Description = (TextView) view.findViewById(R.id.Video_Description);
+            TextView Date = (TextView) view.findViewById(R.id.Video_Date);
+            TextView Location = (TextView) view.findViewById(R.id.Video_Location);
+            //thumbnail.setImageResource(UserVideos.get(position).get(""));
+            Description.setText(UserVideos.get(position).get("Description").toString());
+            Date.setText(UserVideos.get(position).get("Upload_Date").toString());
+            Location.setText(UserVideos.get(position).get("Location").toString());
+
+            return view;
+        }
+    }
 
 }
+
+
+
+
+
