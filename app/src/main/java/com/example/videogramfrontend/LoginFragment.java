@@ -63,6 +63,7 @@ public class LoginFragment extends Fragment {
     public LoginFragment() {
         // Required empty public constructor
         url = "http://" + BuildConfig.Backend + ":3000/user/login";
+
     }
 
     /**
@@ -161,6 +162,9 @@ public class LoginFragment extends Fragment {
                             // if valid credentials
                             if(response.getString("message").equals("success"))
                             {
+                                // set user id of user
+                                UserSingleton.getInstance().setUserId(response.getInt("User_id"));
+                                
                                 if (getView() != null) {
                                     // Move to home page
                                     Navigation.findNavController(getView()).navigate(LoginFragmentDirections.actionLoginFragmentToHomeFragment());
