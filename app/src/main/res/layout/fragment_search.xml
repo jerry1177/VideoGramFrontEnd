@@ -24,13 +24,17 @@
             android:layout_height="fill_parent"/>
         <ListView
             android:id="@+id/UserListView"
-
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/SearchBar"
             android:divider="@color/colorPrimaryDark"
             android:choiceMode="singleChoice"/>
 
+        <VideoView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_below="@id/SearchBar"
+            android:id="@+id/VideoPlayer" />
 
     </RelativeLayout>
 

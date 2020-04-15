@@ -14,12 +14,15 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -30,8 +33,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.List;
 
 
 /**
@@ -54,11 +59,12 @@ public class SearchFragment extends Fragment {
 
     EditText SearchBar;
     ListView UserListView;
+    VideoView VideoPlayer;
     TextView UserName;
     private String url;
-    ArrayList<String> FullListViewDataSource;
-    ArrayList<String> PartialListViewDataSource;
-    ArrayAdapter<String> adapter;
+    ArrayList<String> UserList;
+    ArrayAdapter<String> UserListAdapter;
+
 
 
     private OnFragmentInteractionListener mListener;
@@ -101,32 +107,38 @@ public class SearchFragment extends Fragment {
 
         SearchBar = (EditText) view.findViewById(R.id.SearchBar);
         UserListView = (ListView) view.findViewById(R.id.UserListView);
+        VideoPlayer = (VideoView) view.findViewById(R.id.VideoPlayer);
         UserName = (TextView) view.findViewById(R.id.listItem);
-        FullListViewDataSource = new ArrayList<String>();
-        PartialListViewDataSource = new ArrayList<String>();
-        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, PartialListViewDataSource);
-        UserListView.setAdapter(adapter);
+        UserList = new ArrayList<String>();
+        UserListAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, UserList);
+        UserListView.setAdapter(UserListAdapter);
+        VideoPlayer.setVisibility(View.INVISIBLE);
         SearchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                //PartialListViewDataSource.clear();
             }
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                for (int i = 0; i < FullListViewDataSource.size(); i++) {
-                    if (FullListViewDataSource.get(i).contains(s)) {
-                        PartialListViewDataSource.add(FullListViewDataSource.get(i));
-                    }
+                if (UserListView.getVisibility() == View.INVISIBLE) {
+                    VideoPlayer.setVisibility(View.INVISIBLE);
+                    UserListView.setVisibility(View.VISIBLE);
                 }
-                adapter.notifyDataSetChanged();
+                UserListAdapter.getFilter().filter(s.toString());
+                UserListAdapter.notifyDataSetChanged();
                 //SearchBar.setText(String.valueOf(adapter.getCount()));
                 UserListView.invalidateViews();
             }
-
             @Override
             public void afterTextChanged(Editable s) {
-
+            }
+        });
+        UserListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                SearchBar.setText(UserListAdapter.getItem(position).toString());
+                UserListView.setVisibility(View.INVISIBLE);
+                VideoPlayer.setVisibility(View.VISIBLE);
+                playVideo();
             }
         });
         PopulateUsersList();
@@ -194,6 +206,17 @@ public class SearchFragment extends Fragment {
 
 
 
+    public void playVideo() {
+        MediaController m = new MediaController(getContext());
+        VideoPlayer.setMediaController(m);
+
+        String path = "https://videogramuploadbucket.s3-us-west-2.amazonaws.com/Videogram%2FUser2%2Ftest_video.mp4";
+        Uri uri = Uri.parse(path);
+        VideoPlayer.setVideoURI(uri);
+        VideoPlayer.start();
+
+    }
+
 
 
 
@@ -221,10 +244,9 @@ public class SearchFragment extends Fragment {
                                 //SearchBar.setText(String.valueOf(users.length()));
                                 for (int i = 0; i < users.length(); i++) {
                                     JSONObject element = users.getJSONObject(i);
-                                    FullListViewDataSource.add(element.getString("Username"));
+                                    UserList.add(element.getString("Username"));
                                 }
-                                PartialListViewDataSource = FullListViewDataSource;
-                                adapter.notifyDataSetChanged();
+                                UserListAdapter.notifyDataSetChanged();
                                 //SearchBar.setText(String.valueOf(adapter.getCount()));
                                 UserListView.invalidateViews();
                             }
