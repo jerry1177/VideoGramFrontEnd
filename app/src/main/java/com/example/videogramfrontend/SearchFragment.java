@@ -1,5 +1,6 @@
 package com.example.videogramfrontend;
 
+import android.app.ActionBar;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +12,8 @@ import androidx.navigation.Navigation;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.TypedValue;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,8 +25,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 import android.widget.VideoView;
 
 import com.android.volley.Request;
@@ -35,6 +40,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -70,6 +76,12 @@ public class SearchFragment extends Fragment {
     ArrayList<Map<String, String>> UserVideos;
     ArrayAdapter<String> UserListAdapter;
     UserVideosCustomAdapter UserVideosAdapter;
+
+
+    RelativeLayout Video_Page;
+    TextView Video_Page_Item_1;
+    VideoView Video_Page_Item_2;
+
 
 
 
@@ -114,7 +126,11 @@ public class SearchFragment extends Fragment {
         SearchBar = (EditText) view.findViewById(R.id.SearchBar);
         UserListView = (ListView) view.findViewById(R.id.UserListView);
         UserVideosListView = (ListView) view.findViewById(R.id.UserVideosListView);
-        //UserName = (TextView) view.findViewById(R.id.listItem);
+
+        Video_Page_INIT(view);
+        Video_Page_HIDE();
+
+
         UserList = new ArrayList<String>();
         UserVideos = new ArrayList<Map<String, String>>();
         UserListAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, UserList);
@@ -161,6 +177,20 @@ public class SearchFragment extends Fragment {
                 GetChosenUserId_AndPopulateVideos(UserListAdapter.getItem(position).toString());
             }
         });
+        UserVideosListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //UserVideosListView.setVisibility(View.INVISIBLE);
+                int dp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 225, getResources().getDisplayMetrics());
+                UserVideosListView.getLayoutParams().height = dp;
+                UserVideosListView.requestLayout();
+                Video_Page_SHOW();
+                Video_Page_SET_ITEMS(UserVideos.get(position));
+                Video_Page_START();
+            }
+        });
+
+
         PopulateUsersList();
     }
 
@@ -177,6 +207,7 @@ public class SearchFragment extends Fragment {
             mListener.onFragmentInteraction(uri);
         }
     }
+
 
     @Override
     public void onResume() {
@@ -230,8 +261,29 @@ public class SearchFragment extends Fragment {
 
 
 
-
-
+    private void Video_Page_INIT(View view) {
+        Video_Page = (RelativeLayout) view.findViewById(R.id.VideoRelativeView);
+        Video_Page_Item_1 = (TextView) view.findViewById(R.id.VideoRelativeView1);
+        Video_Page_Item_2 = (VideoView) view.findViewById(R.id.VideoRelativeView2);
+    }
+    private void Video_Page_HIDE() {
+        Video_Page.setVisibility(View.INVISIBLE);
+        Video_Page_Item_1.setVisibility(View.INVISIBLE);
+        Video_Page_Item_2.setVisibility(View.INVISIBLE);
+    }
+    private void Video_Page_SHOW() {
+        Video_Page.setVisibility(View.VISIBLE);
+        Video_Page_Item_1.setVisibility(View.VISIBLE);
+        Video_Page_Item_2.setVisibility(View.VISIBLE);
+    }
+    private void Video_Page_SET_ITEMS(Map<String, String> Dict) {
+        String Description = SearchBar.getText().toString() + ": " + Dict.get("Description").toString();
+        Video_Page_Item_1.setText(Description);
+        Video_Page_Item_2.setVideoURI(Uri.parse(Dict.get("Video_Link").toString()));
+    }
+    private void Video_Page_START() {
+        Video_Page_Item_2.start();
+    }
 
 
 
@@ -353,9 +405,12 @@ public class SearchFragment extends Fragment {
                                 for (int i = 0; i < users.length(); i++) {
                                     JSONObject element = users.getJSONObject(i);
                                     Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("Video_Id", element.getString("Video_Id"));
+                                    dict.put("Video_Link", element.getString("Video_Link"));
                                     dict.put("Description", element.getString("Description"));
                                     dict.put("Upload_Date", element.getString("Upload_Date"));
                                     dict.put("Location", element.getString("Location"));
+                                    dict.put("User_Id", element.getString("User"));
                                     UserVideos.add(dict);
                                 }
                                 UserVideosAdapter.notifyDataSetChanged();
@@ -430,11 +485,11 @@ public class SearchFragment extends Fragment {
             ImageView thumbnail = (ImageView) view.findViewById(R.id.Thumbnail_Image);
             TextView Description = (TextView) view.findViewById(R.id.Video_Description);
             TextView Date = (TextView) view.findViewById(R.id.Video_Date);
-            TextView Location = (TextView) view.findViewById(R.id.Video_Location);
-            //thumbnail.setImageResource(UserVideos.get(position).get(""));
+            //TextView Location = (TextView) view.findViewById(R.id.Video_Location);
+            thumbnail.setImageResource(R.mipmap.error_icon);
             Description.setText(UserVideos.get(position).get("Description").toString());
             Date.setText(UserVideos.get(position).get("Upload_Date").toString());
-            Location.setText(UserVideos.get(position).get("Location").toString());
+            //Location.setText(UserVideos.get(position).get("Location").toString());
 
             return view;
         }

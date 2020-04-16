@@ -6,37 +6,37 @@
 
     <ImageView
         android:id="@+id/Thumbnail_Image"
-        android:layout_width="125dp"
-        android:layout_height="75dp"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:layout_marginRight="10dp"
         android:layout_alignParentLeft="true"
         android:layout_centerHorizontal="true"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/cardview_shadow_start_color"
          />
     <TextView
         android:id="@+id/Video_Description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_toRightOf="@id/Thumbnail_Image"/>
 
     <TextView
         android:id="@+id/Video_Date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_below="@id/Video_Description"
         android:layout_toRightOf="@id/Thumbnail_Image"/>
 
-    <TextView
+    <!--<TextView
         android:id="@+id/Video_Location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:layout_below="@id/Video_Date"
-        android:layout_toRightOf="@id/Thumbnail_Image"/>
+        android:layout_toRightOf="@id/Thumbnail_Image"/>-->
 
 </RelativeLayout>
