@@ -24,6 +24,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -39,6 +41,10 @@ import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.services.s3.AmazonS3Client;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -58,6 +64,8 @@ public class UploadVideoFragment extends Fragment {
     private String mParam2;
     TextView uploadPage;
     Button uploadButton;
+    String AccessKeyId;
+    String SecretKey;
 
     private OnFragmentInteractionListener mListener;
 
@@ -109,6 +117,7 @@ public class UploadVideoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         uploadPage = (TextView) view.findViewById(R.id.uploadPage);
         uploadButton = (Button) view.findViewById(R.id.uploadButton);
         uploadButton.setOnClickListener(new View.OnClickListener() {
@@ -134,7 +143,8 @@ public class UploadVideoFragment extends Fragment {
                 uploadPage.setText("error" + e.toString());
             }
         });
-        uploadPage.setText("good to go");
+        //uploadPage.setText("good to go");
+        loadAccessKeys();
 
     }
 
@@ -207,9 +217,8 @@ public class UploadVideoFragment extends Fragment {
         //File file = new File(filename);
         if (file.exists() || !file.exists()) {
 
-            String KEY = "*****************";
-            String SECRET = "******************";
-            BasicAWSCredentials credentials = new BasicAWSCredentials(KEY, SECRET);
+
+            BasicAWSCredentials credentials = new BasicAWSCredentials(AccessKeyId, SecretKey);
 
             AmazonS3Client s3Client = new AmazonS3Client(credentials);
             TransferUtility transferUtility =
@@ -262,5 +271,26 @@ public class UploadVideoFragment extends Fragment {
         }
     }
 
+
+
+
+
+    public void loadAccessKeys() {
+        String json = null;
+        try {
+            InputStream is = getContext().getResources().openRawResource(R.raw.accesskeys);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+            JSONObject obj = new JSONObject(json);
+            AccessKeyId = obj.getString("accessKeyId");
+            SecretKey = obj.getString("secretKey");
+            uploadPage.setText("Keys set to " + AccessKeyId + "   " + SecretKey);
+        } catch (IOException | JSONException e) {
+            uploadPage.setText("keys couldnt be retrieved " + e.toString());
+        }
+    }
 
 }
