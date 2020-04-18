@@ -1,16 +1,31 @@
 package com.example.videogramfrontend;
 
+import android.Manifest;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import java.io.File;
 
-
+// AWS Imports //
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.mobile.client.Callback;
+import com.amazonaws.mobile.client.UserStateDetails;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
+import com.amazonaws.services.s3.AmazonS3Client;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -28,6 +43,8 @@ public class UploadVideoFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    TextView uploadPage;
+    Button uploadButton;
 
     private OnFragmentInteractionListener mListener;
 
@@ -60,6 +77,7 @@ public class UploadVideoFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
@@ -73,6 +91,33 @@ public class UploadVideoFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_upload_video, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        uploadPage = (TextView) view.findViewById(R.id.uploadPage);
+        uploadButton = (Button) view.findViewById(R.id.uploadButton);
+        uploadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UploadToS3();
+            }
+        });
+
+        //AWSConfiguration config = new AWSConfiguration(getContext());
+        AWSMobileClient.getInstance().initialize(getContext(), new Callback<UserStateDetails>() {
+            @Override
+            public void onResult(UserStateDetails result) {
+                uploadPage.setText("success" + result.toString() + AWSMobileClient.getInstance().getCredentials().toString());
+            }
+            @Override
+            public void onError(Exception e) {
+                uploadPage.setText("error" + e.toString());
+            }
+        });
+        uploadPage.setText("good to go");
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -91,6 +136,8 @@ public class UploadVideoFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+
     }
 
     @Override
@@ -113,4 +160,71 @@ public class UploadVideoFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
+
+
+
+
+    public void UploadToS3() {
+
+        File file = new File("/file/path/here");
+        if (file.exists()) {
+
+            String KEY = "AKIATQXCI3PQK6VEPFHK";
+            String SECRET = "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";
+            BasicAWSCredentials credentials = new BasicAWSCredentials(KEY, SECRET);
+
+            AmazonS3Client s3Client = new AmazonS3Client(credentials);
+            TransferUtility transferUtility =
+                    TransferUtility.builder()
+                            .context(getContext())
+                            .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
+                            .s3Client(s3Client)
+                            .build();
+
+            final TransferObserver uploadObserver =
+                    transferUtility.upload(
+                            "Videogram/User" + String.valueOf(UserSingleton.getInstance().getUserId()) + "/" + file.getName(),
+                            file);
+
+            // Attach a listener to the observer to get state update and progress notifications
+            uploadObserver.setTransferListener(new TransferListener() {
+
+                @Override
+                public void onStateChanged(int id, TransferState state) {
+                    if (TransferState.COMPLETED == state) {
+                        // Handle a completed upload.
+                        uploadPage.setText("Upload Complete");
+                    }
+                }
+
+                @Override
+                public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+                    float percentDonef = ((float) bytesCurrent / (float) bytesTotal) * 100;
+                    int percentDone = (int) percentDonef;
+                    uploadPage.setText(String.valueOf(percentDone) + "%");
+
+                }
+
+                @Override
+                public void onError(int id, Exception ex) {
+                    // Handle errors
+                    uploadPage.setText("errorno: " + String.valueOf(id) + " error: " + ex.toString());
+                }
+
+            });
+
+            // If you prefer to poll for the data, instead of attaching a
+            // listener, check for the state and progress in the observer.
+            if (TransferState.COMPLETED == uploadObserver.getState()) {
+                // Handle a completed upload.
+            }
+        }
+        else {
+            uploadPage.setText("File not valid");
+        }
+    }
+
+
 }
