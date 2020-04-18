@@ -207,8 +207,8 @@ public class UploadVideoFragment extends Fragment {
         //File file = new File(filename);
         if (file.exists() || !file.exists()) {
 
-            String KEY = "AKIATQXCI3PQK6VEPFHK";
-            String SECRET = "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";
+            String KEY = "*****************";
+            String SECRET = "******************";
             BasicAWSCredentials credentials = new BasicAWSCredentials(KEY, SECRET);
 
             AmazonS3Client s3Client = new AmazonS3Client(credentials);
