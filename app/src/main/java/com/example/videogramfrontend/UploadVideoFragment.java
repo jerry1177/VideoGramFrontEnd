@@ -1,7 +1,11 @@
 package com.example.videogramfrontend;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -9,12 +13,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.os.Environment;
+import android.os.SystemClock;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 
 // AWS Imports //
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -101,7 +114,12 @@ public class UploadVideoFragment extends Fragment {
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UploadToS3();
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("*/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                startActivityForResult(intent, 1);
+                //UploadToS3();
             }
         });
 
@@ -118,6 +136,22 @@ public class UploadVideoFragment extends Fragment {
         });
         uploadPage.setText("good to go");
 
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                uploadPage.setText(data.getData().toString());
+                Uri uri = data.getData();
+                File file = new File(uri.getPath());
+
+                UploadToS3(file);
+
+            }
+        }
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -166,10 +200,12 @@ public class UploadVideoFragment extends Fragment {
 
 
 
-    public void UploadToS3() {
+    public void UploadToS3(File file) {
 
-        File file = new File("/file/path/here");
-        if (file.exists()) {
+
+
+        //File file = new File(filename);
+        if (file.exists() || !file.exists()) {
 
             String KEY = "AKIATQXCI3PQK6VEPFHK";
             String SECRET = "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";
