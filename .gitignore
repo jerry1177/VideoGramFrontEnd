@@ -4,6 +4,10 @@
 *.ap_
 *.aab
 
+#AWS
+accesskeys.json
+awsconfiguration.json
+
 # Files for the ART/Dalvik VM
 *.dex
 

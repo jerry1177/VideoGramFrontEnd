@@ -148,6 +148,19 @@ public class UploadVideoFragment extends Fragment {
 
     }
 
+    private final synchronized String getPath(Uri uri) {
+        String res = null;
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = getActivity().getContentResolver().query(uri, proj,
+                null, null, null);
+        if (cursor.moveToFirst()) {
+            int column_index = cursor
+                    .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            res = cursor.getString(column_index);
+        }
+        cursor.close();
+        return res;
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -156,10 +169,10 @@ public class UploadVideoFragment extends Fragment {
             if (resultCode == Activity.RESULT_OK) {
                 uploadPage.setText(data.getData().toString());
                 Uri uri = data.getData();
-                File file = new File(uri.getPath());
+                String path = getPath(uri);
+                File file = new File(path);
 
                 UploadToS3(file);
-
             }
         }
     }
