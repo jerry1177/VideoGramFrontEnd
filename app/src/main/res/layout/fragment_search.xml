@@ -21,7 +21,7 @@
         <ListView
             android:id="@+id/UserListView"
             android:layout_width="wrap_content"
-            android:layout_height="225dp"
+            android:layout_height="wrap_content"
             android:paddingLeft="10dp"
             android:layout_below="@+id/SearchBar"
             android:divider="@color/colorPrimaryDark"

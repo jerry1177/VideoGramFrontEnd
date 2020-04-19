@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/cardview_shadow_end_color"
     tools:context=".UploadVideoFragment">
 
     <!-- TODO: Update blank fragment layout -->
@@ -11,11 +12,15 @@
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:text="Upload page!" />
-    <Button
+    <ImageButton
         android:id="@+id/uploadButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Upload"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:scaleType="fitXY"
+        android:src="@mipmap/upload_icon"
+        android:background="@color/cardview_shadow_end_color"
         android:layout_below="@id/uploadPage"/>
 
 

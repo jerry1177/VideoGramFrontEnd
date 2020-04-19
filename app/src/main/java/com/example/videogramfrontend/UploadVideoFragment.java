@@ -22,7 +22,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,9 +66,10 @@ public class UploadVideoFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     TextView uploadPage;
-    Button uploadButton;
+    ImageButton uploadButton;
     String AccessKeyId;
     String SecretKey;
+    AmazonS3Client s3Client;
 
     private OnFragmentInteractionListener mListener;
 
@@ -119,7 +123,7 @@ public class UploadVideoFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         uploadPage = (TextView) view.findViewById(R.id.uploadPage);
-        uploadButton = (Button) view.findViewById(R.id.uploadButton);
+        uploadButton = (ImageButton) view.findViewById(R.id.uploadButton);
         uploadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,7 +132,6 @@ public class UploadVideoFragment extends Fragment {
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.addCategory(Intent.CATEGORY_DEFAULT);
                 startActivityForResult(intent, 1);
-                //UploadToS3();
             }
         });
 
@@ -143,7 +146,6 @@ public class UploadVideoFragment extends Fragment {
                 uploadPage.setText("error" + e.toString());
             }
         });
-        //uploadPage.setText("good to go");
         loadAccessKeys();
 
     }
@@ -167,12 +169,17 @@ public class UploadVideoFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             if (resultCode == Activity.RESULT_OK) {
-                uploadPage.setText(data.getData().toString());
+                //uploadPage.setText(data.getData().toString());
                 Uri uri = data.getData();
                 String path = getPath(uri);
-                File file = new File(path);
+                if (!path.isEmpty()) {
+                    File file = new File(path);
+                    UploadToS3(file);
+                }
+                else {
+                    Toast.makeText(getContext(),"file invalid", Toast.LENGTH_SHORT).show();
+                }
 
-                UploadToS3(file);
             }
         }
     }
@@ -225,62 +232,54 @@ public class UploadVideoFragment extends Fragment {
 
     public void UploadToS3(File file) {
 
+        final String s3Bucket = "videogramuploadbucket";
+        final String s3FilePath = "Videogram/User" + String.valueOf(UserSingleton.getInstance().getUserId()) + "/" + file.getName();
 
+        BasicAWSCredentials credentials = new BasicAWSCredentials(AccessKeyId, SecretKey);
 
-        //File file = new File(filename);
-        if (file.exists() || !file.exists()) {
+        s3Client = new AmazonS3Client(credentials);
+        TransferUtility transferUtility =
+                TransferUtility.builder()
+                        .context(getContext())
+                        .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
+                        .s3Client(s3Client)
+                        .build();
 
+        final TransferObserver uploadObserver =
+                transferUtility.upload(
+                        file.getName(),
+                        file);
 
-            BasicAWSCredentials credentials = new BasicAWSCredentials(AccessKeyId, SecretKey);
+        // Attach a listener to the observer to get state update and progress notifications
+        uploadObserver.setTransferListener(new TransferListener() {
 
-            AmazonS3Client s3Client = new AmazonS3Client(credentials);
-            TransferUtility transferUtility =
-                    TransferUtility.builder()
-                            .context(getContext())
-                            .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
-                            .s3Client(s3Client)
-                            .build();
-
-            final TransferObserver uploadObserver =
-                    transferUtility.upload(
-                            "Videogram/User" + String.valueOf(UserSingleton.getInstance().getUserId()) + "/" + file.getName(),
-                            file);
-
-            // Attach a listener to the observer to get state update and progress notifications
-            uploadObserver.setTransferListener(new TransferListener() {
-
-                @Override
-                public void onStateChanged(int id, TransferState state) {
-                    if (TransferState.COMPLETED == state) {
-                        // Handle a completed upload.
-                        uploadPage.setText("Upload Complete");
-                    }
+            @Override
+            public void onStateChanged(int id, TransferState state) {
+                if (TransferState.COMPLETED == state) {
+                    // Handle a completed upload.
+                    URL UploadedFileURL = s3Client.getUrl(s3Bucket, s3FilePath);
+                    Toast.makeText(getContext(), UploadedFileURL.toExternalForm(), Toast.LENGTH_SHORT).show();
                 }
-
-                @Override
-                public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
-                    float percentDonef = ((float) bytesCurrent / (float) bytesTotal) * 100;
-                    int percentDone = (int) percentDonef;
-                    uploadPage.setText(String.valueOf(percentDone) + "%");
-
-                }
-
-                @Override
-                public void onError(int id, Exception ex) {
-                    // Handle errors
-                    uploadPage.setText("errorno: " + String.valueOf(id) + " error: " + ex.toString());
-                }
-
-            });
-
-            // If you prefer to poll for the data, instead of attaching a
-            // listener, check for the state and progress in the observer.
-            if (TransferState.COMPLETED == uploadObserver.getState()) {
-                // Handle a completed upload.
             }
-        }
-        else {
-            uploadPage.setText("File not valid");
+
+            @Override
+            public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+                float percentDonef = ((float) bytesCurrent / (float) bytesTotal) * 100;
+                int percentDone = (int) percentDonef;
+                uploadPage.setText(String.valueOf(percentDone) + "%");
+            }
+            @Override
+            public void onError(int id, Exception ex) {
+                // Handle errors
+                uploadPage.setText("errorno: " + String.valueOf(id) + " error: " + ex.toString());
+            }
+
+        });
+
+        // If you prefer to poll for the data, instead of attaching a
+        // listener, check for the state and progress in the observer.
+        if (TransferState.COMPLETED == uploadObserver.getState()) {
+            // Handle a completed upload.
         }
     }
 
@@ -304,6 +303,14 @@ public class UploadVideoFragment extends Fragment {
         } catch (IOException | JSONException e) {
             uploadPage.setText("keys couldnt be retrieved " + e.toString());
         }
+
+
+
+
+
+
+
+
     }
 
 }
