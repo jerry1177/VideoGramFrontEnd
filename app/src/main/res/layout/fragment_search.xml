@@ -61,7 +61,7 @@
                 android:layout_alignParentEnd="true"
                 android:scaleType="fitXY"
                 android:background="@color/cardview_shadow_end_color"
-                android:src="@mipmap/x_icon"/>
+                android:src="@android:drawable/ic_menu_close_clear_cancel"/>
             <VideoView
                 android:id="@+id/VideoRelativeView2"
                 android:layout_width="fill_parent"

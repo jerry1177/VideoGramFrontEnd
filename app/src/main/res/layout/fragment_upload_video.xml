@@ -7,21 +7,52 @@
     tools:context=".UploadVideoFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:id="@+id/uploadPage"
+    <VideoView
+        android:id="@+id/uploadVideoView"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:text="Upload page!" />
+        android:layout_height="225dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginTop="75dp" />
+    <EditText
+        android:id="@+id/description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginStart="15dp"
+        android:layout_below="@id/uploadVideoView"
+        android:hint="Description" />
+    <EditText
+        android:id="@+id/location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginStart="15dp"
+        android:layout_below="@id/description"
+        android:hint="Location" />
+
     <ImageButton
         android:id="@+id/uploadButton"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="@dimen/uploadButtonLarge"
+        android:layout_height="@dimen/uploadButtonLarge"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
         android:scaleType="fitXY"
-        android:src="@mipmap/upload_icon"
+        android:layout_marginTop="10dp"
+        android:src="@android:drawable/ic_menu_upload"
         android:background="@color/cardview_shadow_end_color"
-        android:layout_below="@id/uploadPage"/>
+        android:layout_below="@id/uploadVideoView"/>
+    <TextView
+        android:id="@+id/uploadButtonLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/uploadButtonLarge"
+        android:layout_centerHorizontal="true"
+        android:textAlignment="center"
+        android:text="Choose"
+        android:textSize="15dp"
+        android:layout_below="@id/uploadButton"/>
+
 
 
 </RelativeLayout>

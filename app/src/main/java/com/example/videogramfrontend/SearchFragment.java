@@ -486,7 +486,7 @@ public class SearchFragment extends Fragment {
             TextView Description = (TextView) view.findViewById(R.id.Video_Description);
             TextView Date = (TextView) view.findViewById(R.id.Video_Date);
             //TextView Location = (TextView) view.findViewById(R.id.Video_Location);
-            thumbnail.setImageResource(R.mipmap.error_icon);
+            //thumbnail.setImageResource(R.mipmap.error_icon);
             Description.setText(UserVideos.get(position).get("Description").toString());
             Date.setText(UserVideos.get(position).get("Upload_Date").toString());
             //Location.setText(UserVideos.get(position).get("Location").toString());
