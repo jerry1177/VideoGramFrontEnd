@@ -122,7 +122,8 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        MainActivity main = (MainActivity) getActivity();
+        main.getSupportActionBar().setTitle("Users");
         SearchBar = (EditText) view.findViewById(R.id.SearchBar);
         UserListView = (ListView) view.findViewById(R.id.UserListView);
         UserVideosListView = (ListView) view.findViewById(R.id.UserVideosListView);

@@ -139,6 +139,8 @@ public class UploadVideoFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        MainActivity main = (MainActivity) getActivity();
+        main.getSupportActionBar().setTitle("Upload");
         uploadVideoView = (VideoView) view.findViewById(R.id.uploadVideoView);
         uploadVideoView.setVisibility(View.INVISIBLE);
         description = (EditText) view.findViewById(R.id.description);
