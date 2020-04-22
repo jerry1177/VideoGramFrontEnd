@@ -10,10 +10,10 @@
     <VideoView
         android:id="@+id/uploadVideoView"
         android:layout_width="match_parent"
-        android:layout_height="225dp"
+        android:layout_height="275dp"
         android:layout_marginStart="15dp"
         android:layout_marginEnd="15dp"
-        android:layout_marginTop="75dp" />
+        android:layout_marginTop="25dp" />
     <EditText
         android:id="@+id/description"
         android:layout_width="match_parent"
@@ -21,6 +21,7 @@
         android:layout_marginTop="25dp"
         android:layout_marginEnd="15dp"
         android:layout_marginStart="15dp"
+        android:imeOptions="actionNext"
         android:layout_below="@id/uploadVideoView"
         android:hint="Description" />
     <EditText
@@ -30,6 +31,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="15dp"
         android:layout_marginStart="15dp"
+        android:imeOptions="actionDone"
         android:layout_below="@id/description"
         android:hint="Location" />
 

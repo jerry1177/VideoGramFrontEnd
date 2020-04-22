@@ -49,6 +49,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -74,6 +75,10 @@ public class SearchFragment extends Fragment {
     ListView UserVideosListView;
     TextView UserName;
     ImageButton CloseButton;
+    TextView LikeCount;
+    ImageButton LikeButton;
+    TextView CommentCount;
+    ImageButton CommentButton;
     private String url;
     ArrayList<String> UserList;
     ArrayList<Map<String, String>> UserVideos;
@@ -178,6 +183,8 @@ public class SearchFragment extends Fragment {
                 Video_Page_STOP();
             }
         });
+
+        // User CLICKED On
         UserListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -190,6 +197,8 @@ public class SearchFragment extends Fragment {
                 GetChosenUserId_AndPopulateVideos(UserListAdapter.getItem(position).toString());
             }
         });
+
+        // Video CLICKED On
         UserVideosListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -285,13 +294,15 @@ public class SearchFragment extends Fragment {
         Video_Page_Item_1 = (TextView) view.findViewById(R.id.VideoRelativeView1);
         Video_Page_Item_2 = (VideoView) view.findViewById(R.id.VideoRelativeView2);
         CloseButton = (ImageButton) view.findViewById(R.id.X_Button);
-        final ImageButton LikeButton = (ImageButton) view.findViewById(R.id.LikeButton);
-        ImageButton CommentButton = (ImageButton) view.findViewById(R.id.CommentButton);
+        LikeCount = (TextView) view.findViewById(R.id.LikesCount);
+        CommentCount = (TextView) view.findViewById(R.id.CommentCount);
+        LikeButton = (ImageButton) view.findViewById(R.id.LikeButton);
+        CommentButton = (ImageButton) view.findViewById(R.id.CommentButton);
 
         CloseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Video_Page.setVisibility(View.INVISIBLE);
+                Video_Page_HIDE();
                 Video_Page_STOP();
                 UserVideosListView.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
             }
@@ -300,6 +311,10 @@ public class SearchFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 LikeButton.setImageResource(android.R.drawable.btn_star_big_on);
+                int likes = Integer.parseInt(LikeCount.getText().toString().trim());
+                likes += 1;
+                LikeCount.setText(String.valueOf(likes));
+                UserLikeVideo();
             }
         });
         CommentButton.setOnClickListener(new View.OnClickListener() {
@@ -313,16 +328,27 @@ public class SearchFragment extends Fragment {
         Video_Page.setVisibility(View.INVISIBLE);
         Video_Page_Item_1.setVisibility(View.INVISIBLE);
         Video_Page_Item_2.setVisibility(View.INVISIBLE);
+        LikeButton.setImageResource(android.R.drawable.star_off);
+        ClearLikesAndComments();
+        MainActivity main = (MainActivity) getActivity();
+        main.showNavigationBar();
     }
     private void Video_Page_SHOW() {
         Video_Page.setVisibility(View.VISIBLE);
         Video_Page_Item_1.setVisibility(View.VISIBLE);
         Video_Page_Item_2.setVisibility(View.VISIBLE);
+        MainActivity main = (MainActivity) getActivity();
+        main.hideNavigationBar();
     }
     private void Video_Page_SET_ITEMS(Map<String, String> Dict) {
         String Description = SearchBar.getText().toString() + ": " + Dict.get("Description").toString();
         Video_Page_Item_1.setText(Description);
         Video_Page_Item_2.setVideoURI(Uri.parse(Dict.get("Video_Link").toString()));
+        SetLikes(Dict.get("Video_Id"));
+        SetComments(Dict.get("Video_Id"));
+        LikeCount.setTag(Dict.get("Video_Id"));
+        CommentCount.setTag(Dict.get("Video_Id"));
+
     }
     private void Video_Page_START() {
         Video_Page_Item_2.start();
@@ -330,8 +356,142 @@ public class SearchFragment extends Fragment {
     private void Video_Page_STOP() { Video_Page_Item_2.stopPlayback(); }
 
 
+    private void ClearLikesAndComments() {
+        LikeCount.setText(String.valueOf(0));
+        CommentCount.setText(String.valueOf(0));
+    }
+
+    private void SetLikes(String Video_Id) {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("Video_Id", Video_Id);
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        url = "http://" + BuildConfig.Backend + ":3000/user/video/likes";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                int Likes = response.getJSONArray("result").length();
+                                LikeCount.setText(String.valueOf(Likes));
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
 
 
+    private void SetComments(String Video_Id) {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("Video_Id", Video_Id);
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        url = "http://" + BuildConfig.Backend + ":3000/user/video/comments";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                int Comments = response.getJSONArray("result").length();
+                                CommentCount.setText(String.valueOf(Comments));
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+    private void UserLikeVideo() {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("Video_Id", LikeCount.getTag());
+            params.put("User_Id", UserSingleton.getInstance().getUserId());
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        url = "http://" + BuildConfig.Backend + ":3000/user/like/video";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                //int Comments = response.getJSONArray("result").length();
+                                //CommentCount.setText(String.valueOf(Comments));
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
 
 
     private void PopulateUsersList() {

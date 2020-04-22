@@ -386,7 +386,9 @@ public class UploadVideoFragment extends Fragment {
                             // if valid credentials
                             if(response.getString("message").equals("success"))
                             {
-                                uploadButton.setBackgroundResource(android.R.drawable.gallery_thumb);
+                                //uploadButton.setImageDrawable(null);
+                                //uploadButton.refreshDrawableState();
+                                uploadButtonLabel.setText("Success");
                             }
                             else if (response.get("message").equals("failed")) {
                                 Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
