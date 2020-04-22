@@ -53,6 +53,4 @@
         android:textSize="15dp"
         android:layout_below="@id/uploadButton"/>
 
-
-
 </RelativeLayout>

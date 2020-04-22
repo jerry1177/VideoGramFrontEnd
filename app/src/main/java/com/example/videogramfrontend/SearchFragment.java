@@ -17,11 +17,13 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.MediaController;
@@ -71,6 +73,7 @@ public class SearchFragment extends Fragment {
     ListView UserListView;
     ListView UserVideosListView;
     TextView UserName;
+    ImageButton CloseButton;
     private String url;
     ArrayList<String> UserList;
     ArrayList<Map<String, String>> UserVideos;
@@ -153,10 +156,14 @@ public class SearchFragment extends Fragment {
                 if (UserListView.getVisibility() == View.INVISIBLE) {
                     UserListView.setVisibility(View.VISIBLE);
                 }
+                UserVideosListView.setVisibility(View.INVISIBLE);
+                Video_Page.setVisibility(View.INVISIBLE);
                 UserListAdapter.getFilter().filter(s.toString());
                 UserListAdapter.notifyDataSetChanged();
                 //SearchBar.setText(String.valueOf(adapter.getCount()));
                 UserListView.invalidateViews();
+                Video_Page_HIDE();
+                Video_Page_STOP();
             }
             @Override
             public void afterTextChanged(Editable s) {
@@ -167,14 +174,19 @@ public class SearchFragment extends Fragment {
             public void onClick(View v) {
                 UserListView.setVisibility(View.VISIBLE);
                 UserVideosListView.setVisibility(View.INVISIBLE);
+                Video_Page_HIDE();
+                Video_Page_STOP();
             }
         });
         UserListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                HideKeyboard(SearchBar);
                 SearchBar.setText(UserListAdapter.getItem(position).toString());
                 UserListView.setVisibility(View.INVISIBLE);
                 UserVideosListView.setVisibility(View.VISIBLE);
+                UserVideosListView.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
+                UserVideos.clear();
                 GetChosenUserId_AndPopulateVideos(UserListAdapter.getItem(position).toString());
             }
         });
@@ -185,6 +197,7 @@ public class SearchFragment extends Fragment {
                 int dp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 225, getResources().getDisplayMetrics());
                 UserVideosListView.getLayoutParams().height = dp;
                 UserVideosListView.requestLayout();
+                HideKeyboard(SearchBar);
                 Video_Page_SHOW();
                 Video_Page_SET_ITEMS(UserVideos.get(position));
                 Video_Page_START();
@@ -209,6 +222,11 @@ public class SearchFragment extends Fragment {
         }
     }
 
+    public void HideKeyboard(EditText textfield) {
+        //Hide Keyboard
+        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(textfield.getWindowToken(), 0);
+    }
 
     @Override
     public void onResume() {
@@ -266,6 +284,30 @@ public class SearchFragment extends Fragment {
         Video_Page = (RelativeLayout) view.findViewById(R.id.VideoRelativeView);
         Video_Page_Item_1 = (TextView) view.findViewById(R.id.VideoRelativeView1);
         Video_Page_Item_2 = (VideoView) view.findViewById(R.id.VideoRelativeView2);
+        CloseButton = (ImageButton) view.findViewById(R.id.X_Button);
+        final ImageButton LikeButton = (ImageButton) view.findViewById(R.id.LikeButton);
+        ImageButton CommentButton = (ImageButton) view.findViewById(R.id.CommentButton);
+
+        CloseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Video_Page.setVisibility(View.INVISIBLE);
+                Video_Page_STOP();
+                UserVideosListView.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
+            }
+        });
+        LikeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LikeButton.setImageResource(android.R.drawable.btn_star_big_on);
+            }
+        });
+        CommentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
     }
     private void Video_Page_HIDE() {
         Video_Page.setVisibility(View.INVISIBLE);
@@ -285,7 +327,7 @@ public class SearchFragment extends Fragment {
     private void Video_Page_START() {
         Video_Page_Item_2.start();
     }
-
+    private void Video_Page_STOP() { Video_Page_Item_2.stopPlayback(); }
 
 
 
@@ -489,7 +531,7 @@ public class SearchFragment extends Fragment {
             //TextView Location = (TextView) view.findViewById(R.id.Video_Location);
             //thumbnail.setImageResource(R.mipmap.error_icon);
             Description.setText(UserVideos.get(position).get("Description").toString());
-            Date.setText(UserVideos.get(position).get("Upload_Date").toString());
+            Date.setText(UserVideos.get(position).get("Location").toString());
             //Location.setText(UserVideos.get(position).get("Location").toString());
 
             return view;
