@@ -17,6 +17,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -45,6 +46,7 @@ import org.json.JSONObject;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
@@ -79,12 +81,19 @@ public class SearchFragment extends Fragment {
     ImageButton LikeButton;
     TextView CommentCount;
     ImageButton CommentButton;
+    ListView CommentListView;
+    EditText NewComment;
+    Button SendComment;
+
     private String url;
+    ArrayList<Map<String, String>> Users_UserIDList;
     ArrayList<String> UserList;
     ArrayList<Map<String, String>> UserVideos;
+    ArrayList<Map<String, String>> Comments;
+
     ArrayAdapter<String> UserListAdapter;
     UserVideosCustomAdapter UserVideosAdapter;
-
+    CommentsCustomAdapter CommentsAdapter;
 
     RelativeLayout Video_Page;
     TextView Video_Page_Item_1;
@@ -125,6 +134,8 @@ public class SearchFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+
     }
 
     @Override
@@ -132,14 +143,14 @@ public class SearchFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         MainActivity main = (MainActivity) getActivity();
         main.getSupportActionBar().setTitle("Users");
+
         SearchBar = (EditText) view.findViewById(R.id.SearchBar);
         UserListView = (ListView) view.findViewById(R.id.UserListView);
         UserVideosListView = (ListView) view.findViewById(R.id.UserVideosListView);
 
-        Video_Page_INIT(view);
-        Video_Page_HIDE();
 
 
+        Users_UserIDList = new ArrayList<Map<String, String>>();
         UserList = new ArrayList<String>();
         UserVideos = new ArrayList<Map<String, String>>();
         UserListAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, UserList);
@@ -149,8 +160,9 @@ public class SearchFragment extends Fragment {
         UserVideosListView.setAdapter(UserVideosAdapter);
         UserVideosListView.setVisibility(View.INVISIBLE);
 
-
-
+        GetUsersANDUserIDList();
+        Video_Page_INIT(view);
+        Video_Page_HIDE();
 
         SearchBar.addTextChangedListener(new TextWatcher() {
             @Override
@@ -298,12 +310,25 @@ public class SearchFragment extends Fragment {
         CommentCount = (TextView) view.findViewById(R.id.CommentCount);
         LikeButton = (ImageButton) view.findViewById(R.id.LikeButton);
         CommentButton = (ImageButton) view.findViewById(R.id.CommentButton);
+        NewComment = (EditText) view.findViewById(R.id.NewComment);
+        SendComment = (Button) view.findViewById(R.id.SendComment);
+        NewComment.setVisibility(View.INVISIBLE);
+        SendComment.setVisibility(View.INVISIBLE);
+
+        CommentListView = (ListView) view.findViewById(R.id.CommentListview);
+        Comments = new ArrayList<Map<String, String>>();
+        CommentListView.setVisibility(View.INVISIBLE);
+        CommentsAdapter = new CommentsCustomAdapter();
+        CommentListView.setAdapter(CommentsAdapter);
 
         CloseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Video_Page_HIDE();
                 Video_Page_STOP();
+                NewComment.setVisibility(View.INVISIBLE);
+                SendComment.setVisibility(View.INVISIBLE);
+                CommentListView.setVisibility(View.INVISIBLE);
                 UserVideosListView.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
             }
         });
@@ -320,7 +345,28 @@ public class SearchFragment extends Fragment {
         CommentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if ((CommentListView.getVisibility() == View.INVISIBLE) & (Video_Page_Item_2.getVisibility() == View.VISIBLE)) {
+                    Video_Page_Item_2.setVisibility(View.INVISIBLE);
+                    Video_Page_STOP();
+                    CommentListView.setVisibility(View.VISIBLE);
+                    NewComment.setVisibility(View.VISIBLE);
+                    SendComment.setVisibility(View.VISIBLE);
+                    CommentButton.setImageResource(android.R.drawable.ic_media_play);
+                }
+                else if ((CommentListView.getVisibility() == View.VISIBLE) & (Video_Page_Item_2.getVisibility() == View.INVISIBLE)) {
+                    Video_Page_Item_2.setVisibility(View.VISIBLE);
+                    Video_Page_START();
+                    CommentListView.setVisibility(View.INVISIBLE);
+                    NewComment.setVisibility(View.INVISIBLE);
+                    SendComment.setVisibility(View.INVISIBLE);
+                    CommentButton.setImageResource(android.R.drawable.stat_notify_chat);
+                }
+            }
+        });
+        SendComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UserCommentVideo(NewComment.getText().toString());
             }
         });
     }
@@ -328,6 +374,7 @@ public class SearchFragment extends Fragment {
         Video_Page.setVisibility(View.INVISIBLE);
         Video_Page_Item_1.setVisibility(View.INVISIBLE);
         Video_Page_Item_2.setVisibility(View.INVISIBLE);
+        CommentListView.setVisibility(View.INVISIBLE);
         LikeButton.setImageResource(android.R.drawable.star_off);
         ClearLikesAndComments();
         MainActivity main = (MainActivity) getActivity();
@@ -360,6 +407,7 @@ public class SearchFragment extends Fragment {
         LikeCount.setText(String.valueOf(0));
         CommentCount.setText(String.valueOf(0));
     }
+
 
     private void SetLikes(String Video_Id) {
         JSONObject params = new JSONObject();
@@ -422,8 +470,21 @@ public class SearchFragment extends Fragment {
                             // if valid credentials
                             if(response.getString("message").equals("success"))
                             {
-                                int Comments = response.getJSONArray("result").length();
-                                CommentCount.setText(String.valueOf(Comments));
+                                Comments.clear();
+                                JSONArray comments = response.getJSONArray("result");
+                                int Commentcnt = response.getJSONArray("result").length();
+                                CommentCount.setText(String.valueOf(Commentcnt));
+
+                                for (int i = 0; i < comments.length(); i++) {
+                                    JSONObject element = comments.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("Username", element.getString("Username"));
+                                    dict.put("Comment", element.getString("Comment"));
+                                    Comments.add(dict);
+                                }
+                                Collections.reverse(Comments);
+                                CommentsAdapter.notifyDataSetChanged();
+                                CommentListView.invalidateViews();
                             }
                             else if (response.get("message").equals("failed")) {
                                 Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
@@ -467,8 +528,52 @@ public class SearchFragment extends Fragment {
                             // if valid credentials
                             if(response.getString("message").equals("success"))
                             {
-                                //int Comments = response.getJSONArray("result").length();
-                                //CommentCount.setText(String.valueOf(Comments));
+
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+    private void UserCommentVideo(String comment) {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("Comment", comment);
+            params.put("Video_Id", CommentCount.getTag());
+            params.put("User_Id", UserSingleton.getInstance().getUserId());
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        url = "http://" + BuildConfig.Backend + ":3000/user/comment/video";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                SetComments(CommentCount.getTag().toString());
                             }
                             else if (response.get("message").equals("failed")) {
                                 Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
@@ -538,6 +643,60 @@ public class SearchFragment extends Fragment {
         // Send request by adding it to the request que
         SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
     }
+
+
+
+
+
+    private void GetUsersANDUserIDList() {
+        JSONObject params = new JSONObject();
+        url = "http://" + BuildConfig.Backend + ":3000/find/users";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                Users_UserIDList.clear();
+                                JSONArray users = response.getJSONArray("result");
+                                //SearchBar.setText(String.valueOf(users.length()));
+                                for (int i = 0; i < users.length(); i++) {
+                                    JSONObject element = users.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("User_Id", element.getString("User_Id"));
+                                    dict.put("Username", element.getString("Username"));
+                                    Users_UserIDList.add(dict);
+                                }
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+
+
 
 
     private void GetChosenUserId_AndPopulateVideos(final String Username) {
@@ -697,6 +856,37 @@ public class SearchFragment extends Fragment {
             return view;
         }
     }
+
+    class CommentsCustomAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return Comments.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = getLayoutInflater().inflate(R.layout.listview_comments, null);
+            TextView User = (TextView) view.findViewById(R.id.CommentUser);
+            TextView Comment = (TextView) view.findViewById(R.id.CommentFromUser);
+
+            User.setText(Comments.get(position).get("Username").toString() + ": ");
+            Comment.setText(Comments.get(position).get("Comment").toString());
+
+            return view;
+        }
+    }
+
 
 }
 
