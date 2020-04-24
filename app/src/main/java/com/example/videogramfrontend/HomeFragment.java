@@ -4,12 +4,35 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -29,6 +52,19 @@ public class HomeFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    // UI Elements
+    RecyclerView RecView;
+    Button MyVideosButton;
+    Button MyLikesButton;
+
+    // Data Arrays
+    ArrayList<Map<String, String>> MyVideos;
+    ArrayList<Map<String, String>> MyLikes;
+
+    // Adapters
+    MyRecyclerViewAdapter MyVideosAdapter;
+    MyRecyclerViewAdapter MyLikesAdapter;
 
     private OnFragmentInteractionListener mListener;
 
@@ -62,6 +98,7 @@ public class HomeFragment extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         ((MainActivity)getActivity()).showNavigationBar();
+
     }
 
     @Override
@@ -84,6 +121,52 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        MainActivity main = (MainActivity) getActivity();
+        main.getSupportActionBar().setTitle("Home");
+
+        RecView = (RecyclerView) view.findViewById(R.id.RecView);
+        MyVideosButton = (Button) view.findViewById(R.id.MyVideos);
+        MyLikesButton = (Button) view.findViewById(R.id.MyLikes);
+
+        MyVideos = new ArrayList<Map<String, String>>();
+        MyLikes = new ArrayList<Map<String, String>>();
+        // set up the RecyclerView
+        LinearLayoutManager horizontalLayoutManager
+                = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
+        RecView.setLayoutManager(horizontalLayoutManager);
+
+        MyLikesAdapter = new MyRecyclerViewAdapter(getContext(), MyLikes);
+        MyVideosAdapter = new MyRecyclerViewAdapter(getContext(), MyVideos);
+
+        MyVideosButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyVideos.clear();
+                GetMyVideos();
+                RecView.setAdapter(MyVideosAdapter);
+            }
+        });
+        MyLikesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyLikes.clear();
+                GetMyVideoLikes();
+                RecView.setAdapter(MyLikesAdapter);
+            }
+        });
+
+
+
+        // INIT
+        GetMyVideos();
+        RecView.setAdapter(MyVideosAdapter);
+
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -124,4 +207,259 @@ public class HomeFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
+
+
+    private void AddVideoIntoMyLikes(String Video_Id) {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("Video_Id", Video_Id);
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        String url = "http://" + BuildConfig.Backend + ":3000/get/video/data";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONObject element = response.getJSONObject("result");
+                                Map<String, String> dict = new HashMap<String, String>();
+                                dict.put("Video_Id", element.getString("Video_Id"));
+                                dict.put("Video_Link", element.getString("Video_Link"));
+                                dict.put("Description", element.getString("Description"));
+                                dict.put("Upload_Date", element.getString("Upload_Date"));
+                                dict.put("Location", element.getString("Location"));
+                                dict.put("User_Id", element.getString("User"));
+                                MyLikes.add(dict);
+                                MyLikesAdapter.notifyDataSetChanged();
+
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+    private void GetMyVideoLikes() {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("User_Id", UserSingleton.getInstance().getUserId());
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        String url = "http://" + BuildConfig.Backend + ":3000/likes/for/user";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONArray videosliked = response.getJSONArray("result");
+                                for (int i = 0; i < videosliked.length(); i++) {
+                                    JSONObject element = videosliked.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    String Video_Id = element.getString("Video_Id");
+                                    AddVideoIntoMyLikes(Video_Id);
+                                }
+
+
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+    private void GetMyVideos() {
+        JSONObject params = new JSONObject();
+        try {
+            params.put("User_Id", UserSingleton.getInstance().getUserId());
+        } catch (JSONException e) {
+            Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+        }
+        String url = "http://" + BuildConfig.Backend + ":3000/get/all/user/video/data/";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONArray users = response.getJSONArray("result");
+                                //SearchBar.setText(String.valueOf(users.length()));
+                                for (int i = 0; i < users.length(); i++) {
+                                    JSONObject element = users.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("Video_Id", element.getString("Video_Id"));
+                                    dict.put("Video_Link", element.getString("Video_Link"));
+                                    dict.put("Description", element.getString("Description"));
+                                    dict.put("Upload_Date", element.getString("Upload_Date"));
+                                    dict.put("Location", element.getString("Location"));
+                                    dict.put("User_Id", element.getString("User"));
+                                    MyVideos.add(dict);
+                                }
+                                MyVideosAdapter.notifyDataSetChanged();
+                                //UserVideosAdapter.notifyDataSetChanged();
+                                //SearchBar.setText(String.valueOf(adapter.getCount()));
+                                //UserVideosListView.invalidateViews();
+
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
+
+class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.ViewHolder> {
+
+    private ArrayList<Map<String, String>> mList;
+    private LayoutInflater mInflater;
+    private ItemClickListener mClickListener;
+
+    // data is passed into the constructor
+    MyRecyclerViewAdapter(Context context, ArrayList<Map<String, String>> list) {
+        this.mInflater = LayoutInflater.from(context);
+        this.mList = list;
+    }
+
+    // inflates the row layout from xml when needed
+    @Override
+    @NonNull
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = mInflater.inflate(R.layout.recycler_view, parent, false);
+        return new ViewHolder(view);
+    }
+
+    // binds the data to the view and textview in each row
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        String videoDesc = mList.get(position).get("Description");
+        holder.myTextView.setText(videoDesc);
+    }
+
+    // total number of rows
+    @Override
+    public int getItemCount() {
+        return mList.size();
+    }
+
+    // stores and recycles views as they are scrolled off screen
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        View myView;
+        TextView myTextView;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+            myTextView = itemView.findViewById(R.id.RevViewText);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+        }
+    }
+
+    // convenience method for getting data at click position
+    public String getItem(int id) {
+        return mList.get(id).get("Description");
+    }
+
+    // allows clicks events to be caught
+    public void setClickListener(ItemClickListener itemClickListener) {
+        this.mClickListener = itemClickListener;
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ItemClickListener {
+        void onItemClick(View view, int position);
+    }
+}
+
+
+
+
+

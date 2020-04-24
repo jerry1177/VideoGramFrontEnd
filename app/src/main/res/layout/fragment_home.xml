@@ -1,15 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomeFragment">
 
-    <!-- TODO: Update blank fragment layout -->
     <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Home Page!" />
+        android:id="@+id/Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="30dp"
+        android:text="Welcome Derek" />
 
-</FrameLayout>
+    <!-- TODO: Update blank fragment layout -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RecView"
+        android:layout_height="150dp"
+        android:layout_width="fill_parent"
+        android:layout_above="@+id/MyVideos"
+        android:layout_marginBottom="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@color/cardview_light_background"
+        android:orientation="horizontal"
+        />
+
+    <Button
+        android:id="@+id/MyVideos"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="10dp"
+        android:text="My Videos"
+        android:textColor="@color/cardview_light_background"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:background="@color/colorPrimaryDark"
+        />
+    <Button
+        android:id="@+id/MyLikes"
+        android:layout_width="175dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="10dp"
+        android:text="My Likes"
+        android:textColor="@color/cardview_light_background"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:background="@color/colorPrimary"
+        />
+
+</RelativeLayout>

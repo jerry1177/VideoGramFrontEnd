@@ -366,7 +366,10 @@ public class SearchFragment extends Fragment {
         SendComment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UserCommentVideo(NewComment.getText().toString());
+                if (NewComment.getText().toString().equals("")) {
+                    UserCommentVideo(NewComment.getText().toString());
+                    NewComment.setText("");
+                }
             }
         });
     }
