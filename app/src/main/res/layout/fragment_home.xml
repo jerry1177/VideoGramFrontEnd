@@ -9,14 +9,26 @@
         android:id="@+id/Title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
         android:textColor="@color/colorPrimaryDark"
         android:textSize="30dp"
         android:text="Welcome Derek" />
 
+
+    <VideoView
+        android:id="@+id/videoPlayer"
+        android:layout_width="fill_parent"
+        android:layout_height="275dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_below="@+id/Title" />
+
     <!-- TODO: Update blank fragment layout -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/RecView"
-        android:layout_height="150dp"
+        android:layout_height="100dp"
         android:layout_width="fill_parent"
         android:layout_above="@+id/MyVideos"
         android:layout_marginBottom="10dp"
@@ -24,6 +36,7 @@
         android:layout_marginEnd="10dp"
         android:background="@color/cardview_light_background"
         android:orientation="horizontal"
+        android:clickable="true"
         />
 
     <Button

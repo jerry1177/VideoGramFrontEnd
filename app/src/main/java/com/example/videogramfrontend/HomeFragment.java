@@ -8,17 +8,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -43,7 +48,7 @@ import java.util.Map;
  * Use the {@link HomeFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.ItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -57,10 +62,12 @@ public class HomeFragment extends Fragment {
     RecyclerView RecView;
     Button MyVideosButton;
     Button MyLikesButton;
+    VideoView VideoPlayer;
 
     // Data Arrays
     ArrayList<Map<String, String>> MyVideos;
     ArrayList<Map<String, String>> MyLikes;
+    ArrayList<Map<String, String>> Users;
 
     // Adapters
     MyRecyclerViewAdapter MyVideosAdapter;
@@ -132,16 +139,24 @@ public class HomeFragment extends Fragment {
         RecView = (RecyclerView) view.findViewById(R.id.RecView);
         MyVideosButton = (Button) view.findViewById(R.id.MyVideos);
         MyLikesButton = (Button) view.findViewById(R.id.MyLikes);
+        VideoPlayer = (VideoView) view.findViewById(R.id.videoPlayer);
 
         MyVideos = new ArrayList<Map<String, String>>();
         MyLikes = new ArrayList<Map<String, String>>();
+        Users = new ArrayList<Map<String, String>>();
+
         // set up the RecyclerView
         LinearLayoutManager horizontalLayoutManager
                 = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
         RecView.setLayoutManager(horizontalLayoutManager);
+        RecView.addItemDecoration(new DividerItemDecoration(RecView.getContext(), DividerItemDecoration.HORIZONTAL));
+
+
 
         MyLikesAdapter = new MyRecyclerViewAdapter(getContext(), MyLikes);
+        MyLikesAdapter.setClickListener(this);
         MyVideosAdapter = new MyRecyclerViewAdapter(getContext(), MyVideos);
+        MyVideosAdapter.setClickListener(this);
 
         MyVideosButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -162,12 +177,36 @@ public class HomeFragment extends Fragment {
 
 
 
+
         // INIT
+        LoadUserList();
         GetMyVideos();
         RecView.setAdapter(MyVideosAdapter);
 
-
     }
+
+    int PrevSelectedView;
+
+    @Override
+    public void onItemClick(View view, int position) {
+        RecView.scrollToPosition(position);
+        Video_STOP();
+        if (RecView.getAdapter() == MyVideosAdapter) {
+            Video_SETURL(MyVideosAdapter.getItem(position).get("Video_Link"));
+            Video_START();
+        }
+        else if (RecView.getAdapter() == MyLikesAdapter) {
+            Video_SETURL(MyLikesAdapter.getItem(position).get("Video_Link"));
+            Video_START();
+        }
+    }
+
+    private void Video_SETURL(String Link) {
+        VideoPlayer.setVideoURI(Uri.parse(Link));
+    }
+    private void Video_START() { VideoPlayer.start(); }
+    private void Video_STOP() { VideoPlayer.stopPlayback(); }
+
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -233,7 +272,14 @@ public class HomeFragment extends Fragment {
                                 dict.put("Description", element.getString("Description"));
                                 dict.put("Upload_Date", element.getString("Upload_Date"));
                                 dict.put("Location", element.getString("Location"));
-                                dict.put("User_Id", element.getString("User"));
+                                String UserId = element.getString("User");
+                                dict.put("User_Id", UserId);
+                                for (int j = 0; j < Users.size(); j++) {
+                                    if (Users.get(j).get("User_Id").equals(UserId)) {
+                                        dict.put("Username", Users.get(j).get("Username"));
+                                        break;
+                                    }
+                                }
                                 MyLikes.add(dict);
                                 MyLikesAdapter.notifyDataSetChanged();
 
@@ -340,7 +386,14 @@ public class HomeFragment extends Fragment {
                                     dict.put("Description", element.getString("Description"));
                                     dict.put("Upload_Date", element.getString("Upload_Date"));
                                     dict.put("Location", element.getString("Location"));
-                                    dict.put("User_Id", element.getString("User"));
+                                    String UserId = element.getString("User");
+                                    dict.put("User_Id", UserId);
+                                    for (int j = 0; j < Users.size(); j++) {
+                                        if (Users.get(j).get("User_Id").equals(UserId)) {
+                                            dict.put("Username", Users.get(j).get("Username"));
+                                            break;
+                                        }
+                                    }
                                     MyVideos.add(dict);
                                 }
                                 MyVideosAdapter.notifyDataSetChanged();
@@ -348,6 +401,54 @@ public class HomeFragment extends Fragment {
                                 //SearchBar.setText(String.valueOf(adapter.getCount()));
                                 //UserVideosListView.invalidateViews();
 
+                            }
+                            else if (response.get("message").equals("failed")) {
+                                Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(getContext(), "error", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            //Toast.makeText(getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "retrieve JSON OBJECT ERROR", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                        Toast.makeText(getContext(),error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        // Send request by adding it to the request que
+        SingletonRequestQueue.getInstance(getContext()).getRequestQueue().add(jsonObjectRequest);
+    }
+
+
+
+    private void LoadUserList() {
+        Users.clear();
+        JSONObject params = new JSONObject();
+        String url = "http://" + BuildConfig.Backend + ":3000/find/users";
+        // Make JSON object request
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, params, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            // if valid credentials
+                            if(response.getString("message").equals("success"))
+                            {
+                                JSONArray users = response.getJSONArray("result");
+                                //SearchBar.setText(String.valueOf(users.length()));
+                                for (int i = 0; i < users.length(); i++) {
+                                    JSONObject element = users.getJSONObject(i);
+                                    Map<String, String> dict = new HashMap<String, String>();
+                                    dict.put("User_Id", element.getString("User_Id"));
+                                    dict.put("Username", element.getString("Username"));
+                                    Users.add(dict);
+                                }
                             }
                             else if (response.get("message").equals("failed")) {
                                 Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
@@ -384,9 +485,36 @@ public class HomeFragment extends Fragment {
 
 
 
+    private void DeselectAllViewsInRecViewEXCEPT(int position) {
+        int count = RecView.getAdapter().getItemCount();
+        for (int i = 0; i < (count - 1); i++) {
+            if (i != position) {
+                View item = RecView.findViewHolderForAdapterPosition(i).itemView;
+                DeselectRecViewSelection(item);
+            }
+        }
+    }
 
+    private void SetRecViewSelection(View view) {
+        view.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+        TextView Username = (TextView) view.findViewById(R.id.Username);
+        TextView Description = (TextView) view.findViewById(R.id.RevViewText);
+        ImageView VideoIcon = (ImageView) view.findViewById(R.id.PlayIcon);
 
+        Username.setTextColor(getResources().getColor(android.R.color.white));
+        Description.setTextColor(getResources().getColor(android.R.color.white));
+        VideoIcon.setColorFilter(getResources().getColor(android.R.color.white));
+    }
+    private void DeselectRecViewSelection(View view) {
+        view.setBackgroundColor(getResources().getColor(R.color.design_default_color_background));
+        TextView Username = (TextView) view.findViewById(R.id.Username);
+        TextView Description = (TextView) view.findViewById(R.id.RevViewText);
+        ImageView VideoIcon = (ImageView) view.findViewById(R.id.PlayIcon);
 
+        Username.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+        Description.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+        VideoIcon.setColorFilter(getResources().getColor(R.color.colorPrimaryDark));
+    }
 
 }
 
@@ -413,11 +541,15 @@ class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.V
         return new ViewHolder(view);
     }
 
+
     // binds the data to the view and textview in each row
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String videoDesc = mList.get(position).get("Description");
+        String videoUser = mList.get(position).get("Username");
         holder.myTextView.setText(videoDesc);
+        holder.Username.setText(videoUser);
+        //holder.updateView();
     }
 
     // total number of rows
@@ -426,26 +558,45 @@ class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.V
         return mList.size();
     }
 
+
+
+
+
+
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         View myView;
         TextView myTextView;
+        TextView Username;
+        //int mSelectedIndex;
 
         ViewHolder(View itemView) {
             super(itemView);
+            myView = itemView;
             myTextView = itemView.findViewById(R.id.RevViewText);
+            Username = itemView.findViewById(R.id.Username);
             itemView.setOnClickListener(this);
         }
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null) {
+
+                mClickListener.onItemClick(view, getAdapterPosition());
+            }
         }
+
+
+
+
+
+
+
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
-        return mList.get(id).get("Description");
+    public Map<String, String> getItem(int id) {
+        return mList.get(id);
     }
 
     // allows clicks events to be caught
@@ -456,7 +607,10 @@ class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.V
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
+
     }
+
+
 }
 
 
