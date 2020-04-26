@@ -329,6 +329,9 @@ public class SearchFragment extends Fragment {
                 NewComment.setVisibility(View.INVISIBLE);
                 SendComment.setVisibility(View.INVISIBLE);
                 CommentListView.setVisibility(View.INVISIBLE);
+                NewComment.setText("");
+                HideKeyboard(NewComment);
+                CommentButton.setImageResource(android.R.drawable.stat_notify_chat);
                 UserVideosListView.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
             }
         });
@@ -366,7 +369,7 @@ public class SearchFragment extends Fragment {
         SendComment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (NewComment.getText().toString().equals("")) {
+                if (!NewComment.getText().toString().equals("")) {
                     UserCommentVideo(NewComment.getText().toString());
                     NewComment.setText("");
                 }
