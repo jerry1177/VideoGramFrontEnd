@@ -107,6 +107,10 @@ public class SignupFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        MainActivity main = (MainActivity) getActivity();
+        main.getSupportActionBar().setTitle("Sign Up");
+
         username = (EditText) view.findViewById(R.id.Username);
         password = (EditText) view.findViewById(R.id.Password);
         passwordConfirm = (EditText) view.findViewById(R.id.PasswordConfirm);

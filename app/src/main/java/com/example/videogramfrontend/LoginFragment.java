@@ -115,6 +115,9 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        MainActivity main = (MainActivity) getActivity();
+        main.getSupportActionBar().setTitle("Videogram");
+
         username = (EditText) view.findViewById(R.id.Username);
         password = (EditText) view.findViewById(R.id.Password);
         loginButton = (Button) view.findViewById(R.id.LoginButton);

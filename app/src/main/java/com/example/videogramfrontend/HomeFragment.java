@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -59,6 +60,8 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
     private String mParam2;
 
     // UI Elements
+    TextView Title;
+    ImageButton LogoutButton;
     RecyclerView RecView;
     Button MyVideosButton;
     Button MyLikesButton;
@@ -136,6 +139,8 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
         MainActivity main = (MainActivity) getActivity();
         main.getSupportActionBar().setTitle("Home");
 
+        Title = (TextView) view.findViewById(R.id.Title);
+        LogoutButton = (ImageButton) view.findViewById(R.id.LogoutButton);
         RecView = (RecyclerView) view.findViewById(R.id.RecView);
         MyVideosButton = (Button) view.findViewById(R.id.MyVideos);
         MyLikesButton = (Button) view.findViewById(R.id.MyLikes);
@@ -164,6 +169,8 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
                 MyVideos.clear();
                 GetMyVideos();
                 RecView.setAdapter(MyVideosAdapter);
+                MyVideosButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+                MyLikesButton.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
             }
         });
         MyLikesButton.setOnClickListener(new View.OnClickListener() {
@@ -172,16 +179,24 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
                 MyLikes.clear();
                 GetMyVideoLikes();
                 RecView.setAdapter(MyLikesAdapter);
+                MyVideosButton.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                MyLikesButton.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+            }
+        });
+
+        LogoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Navigation.findNavController(getView()).navigate(HomeFragmentDirections.actionHomeFragmentToLoginFragment());
             }
         });
 
 
 
-
         // INIT
-        LoadUserList();
-        GetMyVideos();
+        INIT_USERS();
         RecView.setAdapter(MyVideosAdapter);
+
 
     }
 
@@ -427,7 +442,7 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
 
 
 
-    private void LoadUserList() {
+    private void INIT_USERS() {
         Users.clear();
         JSONObject params = new JSONObject();
         String url = "http://" + BuildConfig.Backend + ":3000/find/users";
@@ -449,6 +464,8 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
                                     dict.put("Username", element.getString("Username"));
                                     Users.add(dict);
                                 }
+                                SetUserNameTitle();
+                                GetMyVideos();
                             }
                             else if (response.get("message").equals("failed")) {
                                 Toast.makeText(getContext(), response.getString("result"), Toast.LENGTH_SHORT).show();
@@ -474,7 +491,13 @@ public class HomeFragment extends Fragment implements MyRecyclerViewAdapter.Item
     }
 
 
-
+    private void SetUserNameTitle() {
+        for (int i = 0; i < Users.size(); i++) {
+            if (UserSingleton.getInstance().getUserId() == Integer.parseInt(Users.get(i).get("User_Id"))) {
+                Title.setText("Welcome " + Users.get(i).get("Username"));
+            }
+        }
+    }
 
 
 

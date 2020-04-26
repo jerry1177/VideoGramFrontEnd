@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/cardview_light_background"
     tools:context=".HomeFragment">
 
     <TextView
@@ -11,15 +12,29 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
+        android:layout_alignParentStart="true"
         android:textColor="@color/colorPrimaryDark"
         android:textSize="30dp"
-        android:text="Welcome Derek" />
+        android:text="Welcome" />
+
+    <ImageButton
+        android:id="@+id/LogoutButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@android:drawable/ic_menu_revert"
+        android:background="@color/cardview_light_background"
+        android:tint="@color/colorPrimaryDark"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_alignParentEnd="true" />
+
+
 
 
     <VideoView
         android:id="@+id/videoPlayer"
         android:layout_width="fill_parent"
-        android:layout_height="275dp"
+        android:layout_height="250dp"
         android:layout_marginTop="20dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
@@ -31,7 +46,7 @@
         android:layout_height="100dp"
         android:layout_width="fill_parent"
         android:layout_above="@+id/MyVideos"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="20dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:background="@color/cardview_light_background"
