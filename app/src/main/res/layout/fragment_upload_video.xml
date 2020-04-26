@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cardview_shadow_end_color"
+    android:background="@color/cardview_light_background"
     tools:context=".UploadVideoFragment">
 
     <!-- TODO: Update blank fragment layout -->
@@ -43,7 +43,7 @@
         android:scaleType="fitXY"
         android:layout_marginTop="10dp"
         android:src="@android:drawable/ic_menu_upload"
-        android:background="@color/cardview_shadow_end_color"
+        android:background="@color/cardview_light_background"
         android:layout_below="@id/uploadVideoView"/>
     <TextView
         android:id="@+id/uploadButtonLabel"
